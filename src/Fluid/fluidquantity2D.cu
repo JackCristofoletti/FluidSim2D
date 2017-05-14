@@ -79,8 +79,26 @@ __global__ void AdvectKernel(double timestep, double* u, const FluidQuantityPara
 	double x_vel = cuda_math::GridValue2D(u, x, y, u_params->offset_x, u_params->offset_y, u_params->width, u_params->height) / my_params->cell_size;
 	double y_vel = cuda_math::GridValue2D(v, x, y, v_params->offset_x, v_params->offset_y, v_params->width, v_params->height) / my_params->cell_size;
 
-	/* First component: Integrate in time */
-	cuda_math::euler2D(x, y, timestep, x_vel, y_vel);
+	/* Integrate in time 3rd order Runge-Kutta Solver*/
+	{
+		double firstU = cuda_math::GridValue2D(u, x, y, u_params->offset_x, u_params->offset_y, u_params->width, u_params->height) / my_params->cell_size;
+		double firstV = cuda_math::GridValue2D(v, x, y, v_params->offset_x, v_params->offset_y, v_params->width, v_params->height) / my_params->cell_size;
+
+		double midX = x - 0.5 * timestep * firstU;
+		double midY = y - 0.5 * timestep * firstV;
+
+		double midU = cuda_math::GridValue2D(u, midX, midY, u_params->offset_x, u_params->offset_y, u_params->width, u_params->height) / my_params->cell_size;
+		double midV = cuda_math::GridValue2D(v, midX, midY, v_params->offset_x, v_params->offset_y, v_params->width, v_params->height) / my_params->cell_size;
+
+		double lastX = x - 0.75 * timestep * midU;
+		double lastY = y - 0.75 * timestep * midV;
+
+		double lastU = cuda_math::GridValue2D(u, lastX, lastY, u_params->offset_x, u_params->offset_y, u_params->width, u_params->height) / my_params->cell_size;
+		double lastV = cuda_math::GridValue2D(v, lastX, lastY, v_params->offset_x, v_params->offset_y, v_params->width, v_params->height) / my_params->cell_size;
+
+		x -= timestep*(firstU + (3.0 / 9.0) * midU + (4.0 / 9.0) * lastU);
+		y -= timestep*(firstV + (3.0 / 9.0) * midV + (4.0 / 9.0) * lastV);
+	}
 
 	dst[idx] = cuda_math::GridValue2D(src, x, y, my_params->offset_x, my_params->offset_y, my_params->width, my_params->height);
 }
@@ -130,7 +148,6 @@ void FluidQuantity2D::Advect(double timestep, FluidQuantity2D &u, FluidQuantity2
 	AdvectKernel << <thread_dims.first, thread_dims.second >> > (timestep, u.GetGpuSource(), u.GetGpuFluidParams(), v.GetGpuSource(), v.GetGpuFluidParams(), src_gpu_, dst_gpu_, gpu_params_);
 	cudaDeviceSynchronize();
 }
-
 
 void FluidQuantity2D::AddInflow(double x0, double y0, double x1, double y1, double v)
 {
