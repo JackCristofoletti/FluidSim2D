@@ -1,3 +1,0 @@
-﻿  fluidglwidget.cpp
-src\Gui\fluidglwidget.cpp(46): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
-  FluidSimulation.vcxproj -> C:\Users\Jack\Desktop\FluidSimulation\release\FluidSimulation.exe
