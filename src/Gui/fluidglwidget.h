@@ -47,6 +47,7 @@ private:
 	std::function< void(InFlowData*) > inflow_data_callback_;
 	std::function< void(unsigned) > num_inflows_callback_;
 	bool running_ = false;
+	
 };
 
 #endif // FLUIDGLWIDGET_H

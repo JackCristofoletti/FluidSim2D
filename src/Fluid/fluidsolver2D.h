@@ -1,42 +1,37 @@
 #ifndef FLUID_SOLVER_2D_H
-#define FLUID_SOLVER__2DH
+#define FLUID_SOLVER_2D_H
 
-#include "fluidquantity2D.h"
-
+#include "InFlowData.h"
 #include <memory>
 #include <vector>
 
 // This class handles writing to opengl textures through cuda
 class FluidSolverGLCudaInteropHelper;
+class FluidSolver2DPrivate;
+
+#define TX 16 // number of threads per block along x-axis
+#define TY 16 // number of threads per block along y-axis
 
 /* Fluid solver class. Sets up the fluid quantities, forces incompressibility
- * performs advection and adds inflows.
- */
+* performs advection and adds inflows.
+*/
 class FluidSolver2D
 {
 public:
-    FluidSolver2D( unsigned int w, unsigned int h, double density);
+	FluidSolver2D(unsigned int w, unsigned int h, double density);
 
-    ~FluidSolver2D();
+	~FluidSolver2D();
 
-    void Update( double timestep );
+	void Update(double timestep);
 
-    /* Set density and x/y velocity in given rectangle to d/u/v, respectively */
-    void AddInflow( double x, double y, double w, double h, double d, double u, double v );
-	void AddInflowObject(double d, double u, double v, double r, double g, double b, double x, double y, double w, double h );
-
-    /* Returns the maximum allowed timestep. Note that the actual timestep
-     * taken should usually be much below this to ensure accurate
-     * simulation - just never above.
-	 * Not currently implemented
-     */
-    double CalcMaxTimeStep();
+	//add a fluid emmsion object to the scene
+	void AddInflowObject(float d, float u, float v, float r, float g, float b, float x, float y, float rad );
 
 	//returns density data
-	const double* ToImage() const; 
+	const double* ToImage() const;
 
-	unsigned GetWidth() const { return width_; }
-	unsigned GetHeight() const { return height_; }
+	unsigned GetWidth() const;
+	unsigned GetHeight() const;
 
 	/* This function will register a texture with a cuda resource, allowing us to write to it using a cuda kernel
 	*  The assumption here is that the texture was created with a valid type for cuda-opengl texture interop and has the same width, height
@@ -44,7 +39,7 @@ public:
 	*/
 	void RegisterGLTexture(unsigned tex_id);
 
-	std::vector<InFlowData>& GetInFlows() { return inflow_objects_; }
+	std::vector<InFlowData>& GetInFlows();
 
 	//call this function when fluid flow params have changed and we need to trigger a reupload
 	void ReUploadInFlows();
@@ -53,40 +48,21 @@ public:
 	void ResetSimulation();
 
 private:
-    /* Builds the pressure right hand side as the negative divergence */
-    void BuildRhsPressure_();
+	//Binds our cuda arrays to textures
+	void BindTextures_();
+	void UnBindTextures_();
 
-    /* 
-     * The Project operation enforces boundary conditions on solid walls and forces fluid incompressibility ( fluid volume does not change )
-     * The operation will run untill either the iteration limit is reached
-     * Advection algorithms can only be run in divergence free vector fields so this operation must occur first.
-     */
-    void Project_( int limit, double timestep );
+	void CreateObstacleBorder_(); //fills the obstacle texture along the grid border
+	void AddInFlows_();           //Adds speed, color and density to simulation
+	void AdvectCuda_( float timestep); //advect whatever you want
+	void DivergenceCuda_();
+	void JacobiStepCuda_();
+	void ProjectionCuda_();
 
-    /* Applies the computed pressure to the velocity field */
-    void ApplyPressure_( double timestep );
+	void Setup2DTexturesCuda_(); //sets fitler modes on our texture resources
 
 private:
-    /* Fluid quantities */
-    std::unique_ptr<FluidQuantity2D> fluid_concentration_;
-    std::unique_ptr<FluidQuantity2D> u_velocity_;
-	std::unique_ptr<FluidQuantity2D> v_velocity_;
-	std::unique_ptr<FluidQuantity2D> red_, green_, blue_;
-	std::vector<InFlowData> inflow_objects_;
-	
-
-    unsigned int width_;
-    unsigned int height_;
-    double cell_size_;
-    double fluid_density_;
-
-	//gpu buffers and helpers
-	double* rhs_pressure_gpu_; /*Right hand side of pressure solve */
-	double* pressure_gpu_; /* Pressure solution */
-	double* projected_pressure_gpu_; /* tmp buffer used during projection*/
-	InFlowData* inflow_objects_gpu_;
-	bool inflow_objects_dirty_; //flag flowers for reupload
-	std::unique_ptr<FluidSolverGLCudaInteropHelper> texture_writer_;
+	std::unique_ptr<FluidSolver2DPrivate> d_;
 };
 
-#endif;
+#endif

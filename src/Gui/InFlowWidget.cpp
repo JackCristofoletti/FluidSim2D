@@ -159,35 +159,19 @@ void InFlowWidget::on_y_origin_combo_box_valueChanged(const QString &arg1)
 	emit InflowChanged();
 }
 
-void InFlowWidget::on_width_combo_box_valueChanged(double arg1)
+void InFlowWidget::on_radius_combo_box_valueChanged(double arg1)
 {
 	InFlowData* flows = flows_ + current_flow_;
 	if (!flows) return;
-	flows->width = arg1;
+	flows->radius = arg1;
 	emit InflowChanged();
 }
 
-void InFlowWidget::on_width_combo_box_valueChanged(const QString &arg1)
+void InFlowWidget::on_radius_combo_box_valueChanged(const QString &arg1)
 {
 	InFlowData* flows = flows_ + current_flow_;
 	if (!flows) return;
-	flows->width = arg1.toDouble();
-	emit InflowChanged();
-}
-
-void InFlowWidget::on_height_combo_box_valueChanged(double arg1)
-{
-	InFlowData* flows = flows_ + current_flow_;
-	if (!flows) return;
-	flows->height= arg1;
-	emit InflowChanged();
-}
-
-void InFlowWidget::on_height_combo_box_valueChanged(const QString &arg1)
-{
-	InFlowData* flows = flows_ + current_flow_;
-	if (!flows) return;
-	flows->height = arg1.toDouble();
+	flows->radius = arg1.toDouble();
 	emit InflowChanged();
 }
 
@@ -211,8 +195,7 @@ void InFlowWidget::SetDisplayValues_()
 
 		ui.x_origin_combo_box->setValue((*flows).x);
 		ui.y_origin_combo_box->setValue((*flows).y);
-		ui.width_combo_box->setValue((*flows).width);
-		ui.height_combo_box->setValue((*flows).height);
+		ui.radius_combo_box->setValue((*flows).radius);
 	}
 
 	this->blockSignals(false);

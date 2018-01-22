@@ -49,23 +49,6 @@ namespace cuda_math
 		return buffer[x + y*width];
 	}
 
-	//Bilinear Interpolate for value of buffer at x,y
-	template < typename T >
-	__host__ __device__  T GridValue2D(const T* buffer, T x, T y, T offset_x, T offset_y, unsigned width, unsigned height)
-	{
-		x = min(max(x - offset_x, 0.0), width - 1.001);
-		y = min(max(y - offset_y, 0.0), height - 1.001);
-		unsigned ix = (unsigned)x;
-		unsigned iy = (unsigned)y;
-		x -= ix;
-		y -= iy;
-
-		double x00 = At2D(buffer, ix + 0, iy + 0, width, height), x10 = At2D(buffer, ix + 1, iy + 0, width, height);
-		double x01 = At2D(buffer, ix + 0, iy + 1, width, height), x11 = At2D(buffer, ix + 1, iy + 1, width, height);
-
-		return lerp(lerp(x00, x10, x), lerp(x01, x11, x), y);
-	}
-
 	// convert floating point rgba color to unsigned integer
 	template < typename T >
 	__device__ unsigned rgbaToUI(T r, T g, T b, T a)
@@ -78,6 +61,6 @@ namespace cuda_math
 	}
 
 	//initis all data to val
-	__global__ void InitGrid(double *grid, unsigned width, unsigned height, double val);
+	__global__ void InitGrid(float *grid, unsigned width, unsigned height, double val);
 }
 #endif

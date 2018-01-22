@@ -1,5 +1,6 @@
 #include "fluidglwidget.h"
 #include <iostream>
+#include <QElapsedTimer>
 
 FluidGLWidget::FluidGLWidget(QWidget *parent )
     : QOpenGLWidget(parent)
@@ -29,8 +30,8 @@ void FluidGLWidget::initializeGL()
    initializeOpenGLFunctions();
 
     /* Play with these constants, if you want */
-   const int sizeX = 256;
-   const int sizeY = 256;
+   const int sizeX = 512;
+   const int sizeY = 512;
 
    const double density = 0.1;
 
@@ -38,8 +39,9 @@ void FluidGLWidget::initializeGL()
    graphics_renderer_.reset( new Renderer() ); 
    InitFluidTexture_( sizeX, sizeY );
 
-   fluid_simulation_->AddInflowObject(1.0, 0.0, 3.0, 0.0, 45.0, 255.0, 0.5, 0.5, 0.01, 0.05);
-   fluid_simulation_->AddInflowObject(1.0, 0.0, -6.0, 255.0, 70.0, 0.0, 0.5, 0.8, 0.01, 0.05);
+   //two example emitters
+   fluid_simulation_->AddInflowObject(1.0, 0.0, 300.0, 0.0, 0.0, 255.0, 0.5, 0.5, 0.01);
+   fluid_simulation_->AddInflowObject(1.0, 0.0, -600.0, 255.0, 0.0, 0.0, 0.5, 0.8, 0.01);
 
    //call this first so we can display the pointer data in the widget
    if (num_inflows_callback_)
@@ -54,10 +56,13 @@ void FluidGLWidget::initializeGL()
 
 void FluidGLWidget::paintGL()
 {
+	QElapsedTimer timer;
+	timer.start();
     UpdateSimulation_();
     glClear(GL_COLOR_BUFFER_BIT);
     graphics_renderer_->RenderTexture( fluid_texture_ );
-    update();
+	std::cout << "Frames Per Second: " << 1.0f / float( timer.elapsed() / 1000.0f ) << '\r';
+	update();
 }
 
 void FluidGLWidget::resizeGL(int width, int height)

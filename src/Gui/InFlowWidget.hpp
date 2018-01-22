@@ -55,13 +55,9 @@ private slots:
 
 	void on_y_origin_combo_box_valueChanged(const QString &arg1);
 
-	void on_width_combo_box_valueChanged(double arg1);
+	void on_radius_combo_box_valueChanged(double arg1);
 
-	void on_width_combo_box_valueChanged(const QString &arg1);
-
-	void on_height_combo_box_valueChanged(double arg1);
-
-	void on_height_combo_box_valueChanged(const QString &arg1);
+	void on_radius_combo_box_valueChanged(const QString &arg1);
 
 private:
 	void SetDisplayValues_();

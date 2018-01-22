@@ -6,11 +6,12 @@ namespace cuda_math
 		const dim3 blockSize(tx, ty);
 		const int bx = (width + tx - 1) / tx;
 		const int by = (height + ty - 1) / ty;
-		const dim3 gridSize = dim3(bx, by);
+		const dim3 gridSize
+			= dim3(bx, by);
 		return std::make_pair(gridSize, blockSize);
 	}
 
-	__global__ void InitGrid(double *grid, unsigned width, unsigned height, double val)
+	__global__ void InitGrid(float *grid, unsigned width, unsigned height, double val)
 	{
 		const int x = blockIdx.x * blockDim.x + threadIdx.x;
 		const int y = blockIdx.y * blockDim.y + threadIdx.y;
