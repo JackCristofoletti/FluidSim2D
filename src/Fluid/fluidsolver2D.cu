@@ -317,13 +317,13 @@ __global__ void Advect1DQuantity( float *dens, float timestep, float dissipation
 
 		// Third Order Runge-Kutta Solver for advection
 		float2 firstPos = make_float2( xc, yc );
-		float2 firstVel = invGridSize * tex2D( CudaTextureResources::velocityTexture, xc, yc ) * make_float2( (float)gridSize.x, (float)gridSize.y );
+		float2 firstVel = invGridSize * tex2D( CudaTextureResources::velocityTexture, xc, yc );
 
 		float2 midPos = firstPos - 0.5 * timestep * firstVel;
-		float2 midVel = invGridSize * tex2D( CudaTextureResources::velocityTexture, midPos.x, midPos.y )*make_float2( (float)gridSize.x, (float)gridSize.y );
+		float2 midVel = invGridSize * tex2D( CudaTextureResources::velocityTexture, midPos.x, midPos.y );
 
 		float2 finalPos = firstPos - 0.75 * timestep * midVel;
-		float2 finalVel = invGridSize * tex2D( CudaTextureResources::velocityTexture, finalPos.x, finalPos.y )*make_float2( (float)gridSize.x, (float)gridSize.y );
+		float2 finalVel = invGridSize * tex2D( CudaTextureResources::velocityTexture, finalPos.x, finalPos.y );
 
 		float2 pos = firstPos - timestep* (
 			firstVel
