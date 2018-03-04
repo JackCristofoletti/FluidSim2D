@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1163</width>
+    <width>1263</width>
     <height>788</height>
    </rect>
   </property>
@@ -68,7 +68,7 @@
      <rect>
       <x>960</x>
       <y>0</y>
-      <width>201</width>
+      <width>281</width>
       <height>631</height>
      </rect>
     </property>
@@ -76,7 +76,7 @@
      <string notr="true"/>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="InFlowWidget" name="inflows_tab">
      <property name="styleSheet">
@@ -86,9 +86,9 @@
       <string>Inflows</string>
      </attribute>
     </widget>
-    <widget class="QWidget" name="tab_2">
+    <widget class="SolidBodyTab" name="solidBodyTab">
      <attribute name="title">
-      <string>Tab 2</string>
+      <string>Solid Bodies</string>
      </attribute>
     </widget>
    </widget>
@@ -98,7 +98,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1163</width>
+     <width>1263</width>
      <height>26</height>
     </rect>
    </property>
@@ -125,6 +125,12 @@
    <class>InFlowWidget</class>
    <extends>QWidget</extends>
    <header location="global">src/gui/InFlowWidget.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>SolidBodyTab</class>
+   <extends>QWidget</extends>
+   <header location="global">src/gui/solidbodytab.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

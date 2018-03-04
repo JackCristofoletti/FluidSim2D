@@ -1,8 +1,6 @@
 #ifndef INFLOW_H
 #define INFLOW_H
 
-#define MAX_NUM_INFLOWS 10 //max number of flowers in simulation
-
 // Object used to add to fluid quantities
 struct InFlowData
 {

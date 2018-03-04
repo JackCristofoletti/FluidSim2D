@@ -151,6 +151,9 @@
     <ClCompile Include="Debug\moc_mainwindow.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Debug\moc_solidbodytab.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="GeneratedFiles\qrc_darkstyle.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
       </PrecompiledHeader>
@@ -166,7 +169,11 @@
     <ClCompile Include="Release\moc_mainwindow.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Release\moc_solidbodytab.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\Fluid\InFlowData.cpp" />
+    <ClCompile Include="src\Fluid\SolidBody.cpp" />
     <ClCompile Include="src\Gui\fluidglwidget.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">MaxSpeed</Optimization>
       <InlineFunctionExpansion Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AnySuitable</InlineFunctionExpansion>
@@ -176,6 +183,7 @@
     <ClCompile Include="mainwindow.cpp" />
     <ClCompile Include="src\Graphics\renderer.cpp" />
     <ClCompile Include="src\Gui\InFlowWidget.cpp" />
+    <ClCompile Include="src\Gui\solidbodytab.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="src\Gui\fluidglwidget.h">
@@ -200,6 +208,7 @@
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
     </CustomBuild>
+    <ClInclude Include="GeneratedFiles\ui_solidbodytab.h" />
     <ClInclude Include="src\Fluid\fluidsolver2D.h" />
     <ClInclude Include="src\Fluid\InFlowData.h" />
     <CustomBuild Include="src\Gui\InFlowWidget.hpp">
@@ -209,6 +218,17 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o "$(ConfigurationName)\moc_%(Filename).cpp"  -D_WINDOWS -DUNICODE -DWIN32 -DWIN64 -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB "-I." "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\include" "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\include\QtWidgets" "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\include\QtGui" "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\include\QtANGLE" "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\include\QtCore" "-I.\debug" "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\mkspecs\win32-msvc2015" "-I.\GeneratedFiles" "-I.\src\Gui"</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Moc%27ing InFlowWidget.hpp...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ConfigurationName)\moc_%(Filename).cpp</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o "$(ConfigurationName)\moc_%(Filename).cpp"  -D_WINDOWS -DUNICODE -DWIN32 -DWIN64 -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -DNDEBUG "-I." "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\include" "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\include\QtWidgets" "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\include\QtGui" "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\include\QtANGLE" "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\include\QtCore" "-I.\release" "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\mkspecs\win32-msvc2015" "-I.\GeneratedFiles" "-I.\src\Gui"</Command>
+    </CustomBuild>
+    <ClInclude Include="src\Fluid\SolidBody.h" />
+    <CustomBuild Include="src\Gui\solidbodytab.hpp">
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Moc%27ing solidbodytab.hpp...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ConfigurationName)\moc_%(Filename).cpp</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o "$(ConfigurationName)\moc_%(Filename).cpp"  -D_WINDOWS -DUNICODE -DWIN32 -DWIN64 -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB "-I." "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\include" "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\include\QtWidgets" "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\include\QtGui" "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\include\QtANGLE" "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\include\QtCore" "-I.\debug" "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\mkspecs\win32-msvc2015" "-I.\GeneratedFiles" "-I.\src\Gui"</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Moc%27ing solidbodytab.hpp...</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ConfigurationName)\moc_%(Filename).cpp</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o "$(ConfigurationName)\moc_%(Filename).cpp"  -D_WINDOWS -DUNICODE -DWIN32 -DWIN64 -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -DNDEBUG "-I." "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\include" "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\include\QtWidgets" "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\include\QtGui" "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\include\QtANGLE" "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\include\QtCore" "-I.\release" "-I.\..\..\OneDrive\DEV\QtWebsite\5.7\msvc2015_64\mkspecs\win32-msvc2015" "-I.\GeneratedFiles" "-I.\src\Gui"</Command>
     </CustomBuild>
@@ -243,6 +263,18 @@
     <None Include="shaders\quad.frag" />
     <None Include="shaders\quad.vert" />
     <CustomBuild Include="src\Gui\InFlowWidget.ui">
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR)\bin\uic.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Uic%27ing %(Identity)...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\ui_%(Filename).h;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(QTDIR)\bin\uic.exe" -o ".\GeneratedFiles\ui_%(Filename).h" "%(FullPath)"</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(QTDIR)\bin\uic.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Uic%27ing %(Identity)...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\ui_%(Filename).h;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(QTDIR)\bin\uic.exe" -o ".\GeneratedFiles\ui_%(Filename).h" "%(FullPath)"</Command>
+    </CustomBuild>
+    <None Include="shaders\solidBodyQuad.frag" />
+    <None Include="shaders\solidBodyQuad.vert" />
+    <CustomBuild Include="src\Gui\solidbodytab.ui">
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR)\bin\uic.exe;%(AdditionalInputs)</AdditionalInputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Uic%27ing %(Identity)...</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\ui_%(Filename).h;%(Outputs)</Outputs>

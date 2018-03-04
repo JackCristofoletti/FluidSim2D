@@ -15,17 +15,17 @@ namespace CudaTextureResources
 	surface<void, 2> outputSurface;
 
 	// Texture References for 2d fluid sim
-	texture<float,  2,  cudaReadModeElementType>   densityTexture;
-	texture<float4, 2,  cudaReadModeElementType>   colorTexture;
-	texture<float2, 2,  cudaReadModeElementType>   velocityTexture;
-	texture<float,  2,  cudaReadModeElementType>   pressureTexture;
-	texture<float,  2,  cudaReadModeElementType>   divergenceTexture;
-	texture<float4, 2,  cudaReadModeElementType>   obstacleTexture;
+	texture<float, 2, cudaReadModeElementType>   densityTexture;
+	texture<float4, 2, cudaReadModeElementType>   colorTexture;
+	texture<float2, 2, cudaReadModeElementType>   velocityTexture;
+	texture<float, 2, cudaReadModeElementType>   pressureTexture;
+	texture<float, 2, cudaReadModeElementType>   divergenceTexture;
+	texture<float4, 2, cudaReadModeElementType>   obstacleTexture;
 
 
 	enum FluidQuantities
 	{
-		  RED
+		RED
 		, GREEN
 		, BLUE
 		, VEL
@@ -49,7 +49,7 @@ namespace CudaTextureResources
 
 	//This writes a dev buffer to a texture. Seemingly quicker than copying via cudaMemCpyArray
 	template< typename T >
-	void WriteArrayToCudaSurface( T* buffer, cudaArray* cudaSurfaceArray, uint2 gridDim)
+	void WriteArrayToCudaSurface( T* buffer, cudaArray* cudaSurfaceArray, uint2 gridDim )
 	{
 		cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<T>();
 		cudaError error = cudaBindSurfaceToArray( outputSurface, cudaSurfaceArray, channelDesc );
@@ -59,7 +59,7 @@ namespace CudaTextureResources
 			std::exit( 1 );
 		}
 		auto thread_dims = cuda_math::GetKernelDimensions( gridDim.x, gridDim.y, TX, TY );
-		cudaArrayWriteSurface << <thread_dims.first, thread_dims.second >> > ( buffer, gridDim );
+		cudaArrayWriteSurface << <thread_dims.first, thread_dims.second >> > (buffer, gridDim);
 		cudaDeviceSynchronize();
 	}
 }
@@ -84,7 +84,7 @@ __global__ void createObstacleBorder( float4 *obst, uint2 gridSize )
 	const int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int index = x + y * gridSize.y;
 
-	if (x< gridSize.x && y< gridSize.y )
+	if (x < gridSize.x && y < gridSize.y)
 	{
 		obst[index] = make_float4( 0, 0, 0, 0 );
 
@@ -96,12 +96,40 @@ __global__ void createObstacleBorder( float4 *obst, uint2 gridSize )
 			obst[index].w = 1;
 		}
 
-		if ( y == 0) {
+		if (y == 0) {
 			obst[index].w = 1;
 		}
 
 		if (y == (gridSize.y - 1)) {
 			obst[index].w = 1;
+		}
+	}
+}
+
+__global__ void addSolidBodyObstacles( float4* obst, uint2 gridSize, SolidBody* bodies, unsigned num_bodies )
+{
+	const int x = blockIdx.x * blockDim.x + threadIdx.x;
+	const int y = blockIdx.y * blockDim.y + threadIdx.y;
+	int index = x + y * gridSize.y;
+
+	if (x < gridSize.x && y < gridSize.y)
+	{
+		float2 nc = make_float2( float( x ) / float( gridSize.x ), float( y ) / float( gridSize.y ) );
+		for( unsigned i = 0; i < num_bodies; i++ )
+		{
+			// check if inside box
+			if(	  bodies[i].type == SolidBody::BOX &&
+				( bodies[i].posX - bodies[i].scaleX / 2.0f)				      < nc.x &&
+				( bodies[i].posX + bodies[i].scaleX / 2.0f ) > nc.x &&
+				( bodies[i].posY - bodies[i].scaleY / 2.0f)					  < nc.y &&
+				( bodies[i].posY + bodies[i].scaleY / 2.0f ) > nc.y )
+			{
+				obst[index].w = 1.0;
+			}
+
+			else if(bodies[i].type == SolidBody::CIRCLE && length( nc - make_float2(bodies[i].posX , bodies[i].posY)) < bodies[i].scaleX )
+				obst[index].w = 1.0;
+
 		}
 	}
 }
@@ -141,12 +169,12 @@ __global__ void AddInFlowColor( float4* buffer, uint2 gridSize, float cell_size,
 		for (int i = 0; i < num_inflows; i++)
 		{
 			//calculate if index is inside of circle
-			float2 emiiterPos = make_float2( inflows[i].x, inflows[i].y  );
+			float2 emiiterPos = make_float2( inflows[i].x, inflows[i].y );
 			float2 dist = (position - emiiterPos);
 
-			if (dot( dist, dist ) <(inflows[i].radius*inflows[i].radius))
+			if (dot( dist, dist ) < (inflows[i].radius*inflows[i].radius))
 			{
-				if(fabs( buffer[index].x ) < fabs( inflows[i].red ))
+				if (fabs( buffer[index].x ) < fabs( inflows[i].red ))
 					buffer[index].x = clamp( inflows[i].red + buffer[index].x, 0.0f, 255.0f );
 				if (fabs( buffer[index].y ) < fabs( inflows[i].green ))
 					buffer[index].y = clamp( inflows[i].green + buffer[index].y, 0.0f, 255.0f );
@@ -169,14 +197,14 @@ __global__ void AddInFlowVelocityCUDA( float2* velocity, uint2 gridSize, float c
 		for (int i = 0; i < num_inflows; i++)
 		{
 			//calculate if index is inside of circle
-			float2 emiiterPos = make_float2( inflows[i].x , inflows[i].y );
+			float2 emiiterPos = make_float2( inflows[i].x, inflows[i].y );
 			float2 dist = (position - emiiterPos);
 
-			if (dot( dist, dist )<(inflows[i].radius*inflows[i].radius))
+			if (dot( dist, dist ) < (inflows[i].radius*inflows[i].radius))
 			{
 				float uVel = velocity[index].x;
 				float vVel = velocity[index].y;
-				
+
 				if (fabs( uVel ) < fabs( inflows[i].u_vel ))
 					uVel = inflows[i].u_vel;
 				if (fabs( vVel ) < fabs( inflows[i].v_vel ))
@@ -195,7 +223,7 @@ __global__ void AdvectVel( float2 *vel, float timestep, float dissipation, float
 	// int index = x + y * blockDim.x * gridDim.x;
 	int index = x + y * gridSize.x;
 
-	if (x<gridSize.x && y<gridSize.y) {
+	if (x < gridSize.x && y < gridSize.y) {
 
 		float xc = x + 0.5;
 		float yc = y + 0.5;
@@ -235,7 +263,7 @@ __global__ void AdvectColor( float4 *color, float timestep, float dissipation, f
 	// int index = x + y * blockDim.x * gridDim.x;
 	int index = x + y * gridSize.x;
 
-	if (x<gridSize.x && y<gridSize.y) {
+	if (x < gridSize.x && y < gridSize.y) {
 
 		float xc = x + 0.5;
 		float yc = y + 0.5;
@@ -250,16 +278,16 @@ __global__ void AdvectColor( float4 *color, float timestep, float dissipation, f
 		// Third Order Runge-Kutta Solver for advection
 		float2 firstPos = make_float2( xc, yc );
 		float2 firstVel = invGridSize * tex2D( CudaTextureResources::velocityTexture, xc, yc ) * make_float2( (float)gridSize.x, (float)gridSize.y );
-		
+
 		float2 midPos = firstPos - 0.5 * timestep * firstVel;
 		float2 midVel = invGridSize * tex2D( CudaTextureResources::velocityTexture, midPos.x, midPos.y )*make_float2( (float)gridSize.x, (float)gridSize.y );
-		
+
 		float2 finalPos = firstPos - 0.75 * timestep * midVel;
 		float2 finalVel = invGridSize * tex2D( CudaTextureResources::velocityTexture, finalPos.x, finalPos.y )*make_float2( (float)gridSize.x, (float)gridSize.y );
-		
-		float2 pos = firstPos - timestep* ( 
-			  firstVel 
-			+ (3.0 / 9.0) * midVel 
+
+		float2 pos = firstPos - timestep* (
+			firstVel
+			+ (3.0 / 9.0) * midVel
 			+ (4.0 / 9.0) * finalVel
 			);
 
@@ -275,7 +303,7 @@ __global__ void Advect1DQuantity( float *dens, float timestep, float dissipation
 	int y = threadIdx.y + blockIdx.y * blockDim.y;
 	int index = x + y * gridSize.x;
 
-	if (x<gridSize.x && y<gridSize.y) {
+	if (x < gridSize.x && y < gridSize.y) {
 
 		float xc = x + 0.5;
 		float yc = y + 0.5;
@@ -314,7 +342,7 @@ __global__ void Divergence( float *div, uint2 gridSize, float2 invCellSize ) {
 	// int index = x + y * blockDim.x * gridDim.x;
 	int index = x + y * gridSize.x;
 
-	if ( x < gridSize.x && y < gridSize.y ) 
+	if (x < gridSize.x && y < gridSize.y)
 	{
 		float xc = x + 0.5;
 		float yc = y + 0.5;
@@ -331,10 +359,10 @@ __global__ void Divergence( float *div, uint2 gridSize, float2 invCellSize ) {
 		float4 oB = tex2D( CudaTextureResources::obstacleTexture, xc, yc - 1 );
 
 		// Use obstacle velocities for solid cells:
-		if (oL.w>0) vL = make_float2( oL.x, oL.y );
-		if (oR.w>0) vR = make_float2( oR.x, oR.y );
-		if (oT.w>0) vT = make_float2( oT.x, oT.y );
-		if (oB.w>0) vB = make_float2( oB.x, oB.y );
+		if (oL.w > 0) vL = make_float2( oL.x, oL.y );
+		if (oR.w > 0) vR = make_float2( oR.x, oR.y );
+		if (oT.w > 0) vT = make_float2( oT.x, oT.y );
+		if (oB.w > 0) vB = make_float2( oB.x, oB.y );
 
 		div[index] = 0.5 * (invCellSize.x*(vR.x - vL.x) + invCellSize.y*(vT.y - vB.y));
 	}
@@ -347,7 +375,7 @@ __global__ void JacobiStep( float *pressure, float alpha, float rBeta, uint2 gri
 	//int index = x + y * blockDim.x * gridDim.x;
 	int index = x + y * gridSize.x;
 
-	if (x<gridSize.x && y<gridSize.y) {
+	if (x < gridSize.x && y < gridSize.y) {
 
 		float xc = x + 0.5;
 		float yc = y + 0.5;
@@ -366,10 +394,10 @@ __global__ void JacobiStep( float *pressure, float alpha, float rBeta, uint2 gri
 		float4 oB = tex2D( CudaTextureResources::obstacleTexture, xc, yc - 1 );
 
 		// Use center pressure for solid cells (non slip zero boundary):
-		if (oL.w>0) pL = pC;
-		if (oR.w>0) pR = pC;
-		if (oT.w>0) pT = pC;
-		if (oB.w>0) pB = pC;
+		if (oL.w > 0) pL = pC;
+		if (oR.w > 0) pR = pC;
+		if (oT.w > 0) pT = pC;
+		if (oB.w > 0) pB = pC;
 
 		float dC = tex2D( CudaTextureResources::divergenceTexture, xc, yc );
 
@@ -385,7 +413,7 @@ __global__ void Projection( float2 *vel, uint2 gridSize, float2 invCellSize ) {
 	//int index = x + y * blockDim.x * gridDim.x;
 	int index = x + y * gridSize.x;
 
-	if (x<gridSize.x && y<gridSize.y) 
+	if (x < gridSize.x && y < gridSize.y)
 	{
 		float xc = x + 0.5;
 		float yc = y + 0.5;
@@ -425,13 +453,17 @@ public:
 	FluidSolver2DPrivate( unsigned int w, unsigned int h, double density );
 	~FluidSolver2DPrivate();
 public:
-	/* Fluid quantities */
+	/* Fluid quantities and objects */
 	std::vector<InFlowData> inflowObjects_;
+	std::vector<SolidBody>	solidBodies_;
+	float fluid_density_;
+
+	// grid dimensions  
 	uint2		 gridSize;
-	float2		 invGridSize; // grid dimensions  
+	float2		 invGridSize;
 	float2		 invCellSize;
 	float cell_size_;
-	float fluid_density_;
+
 
 	//fluid solver buffers
 	float2*     dev_vel;
@@ -452,7 +484,8 @@ public:
 	cudaArray*  colorArray;
 
 
-	InFlowData* inflowObjectsGpu_;
+	InFlowData* inflowObjectsGpu;
+	SolidBody*  solidBodyObjectsGpu;
 	bool inflowObjectsDirty_; //flag flowers for reupload
 	std::unique_ptr<FluidSolverGLCudaInteropHelper> texture_writer_;
 };
@@ -513,7 +546,7 @@ FluidSolver2D::~FluidSolver2D()
 
 void FluidSolver2D::Update( double timestep )
 {
-	CreateObstacleBorder_();
+	FillObstacleTexture_();
 	//cudaMemcpyToArray( d_->obstArray, 0, 0, d_->dev_obstacles, d_->gridSize.x * d->gridSize.y * sizeof( float4 ), cudaMemcpyDeviceToDevice );
 	CudaTextureResources::WriteArrayToCudaSurface( d_->dev_obstacles, d_->obstArray, d_->gridSize );
 
@@ -523,41 +556,76 @@ void FluidSolver2D::Update( double timestep )
 	CudaTextureResources::WriteArrayToCudaSurface( d_->dev_vel, d_->velArray, d_->gridSize );
 	CudaTextureResources::WriteArrayToCudaSurface( d_->dev_dens, d_->densArray, d_->gridSize );
 	CudaTextureResources::WriteArrayToCudaSurface( d_->dev_color, d_->colorArray, d_->gridSize );
-	
+
 	AdvectCuda_( timestep );
-	
+
 	CudaTextureResources::WriteArrayToCudaSurface( d_->dev_vel, d_->velArray, d_->gridSize );
 	CudaTextureResources::WriteArrayToCudaSurface( d_->dev_dens, d_->densArray, d_->gridSize );
 	CudaTextureResources::WriteArrayToCudaSurface( d_->dev_color, d_->colorArray, d_->gridSize );
 
 	DivergenceCuda_();
-	
+
 	//initial pressure guess
 	cudaMemset( d_->dev_pressure, 0, sizeof( float ) *d_->gridSize.x * d_->gridSize.y );
 	CudaTextureResources::WriteArrayToCudaSurface( d_->dev_div, d_->divArray, d_->gridSize );
 
 	const int jacIter = 40;
-	for (int i = 0; i<jacIter; i++) {
+	for (int i = 0; i < jacIter; i++) {
 		CudaTextureResources::WriteArrayToCudaSurface( d_->dev_pressure, d_->pressureArray, d_->gridSize );
 		JacobiStepCuda_();
 	}
-	
+
 	CudaTextureResources::WriteArrayToCudaSurface( d_->dev_pressure, d_->pressureArray, d_->gridSize );
 	ProjectionCuda_();
-	
+
 	UnBindTextures_();
-	
-	d_->texture_writer_->WriteToFluidTexture( d_->gridSize, d_->dev_dens, d_->dev_color);
+
+	d_->texture_writer_->WriteToFluidTexture( d_->gridSize, d_->dev_dens, d_->dev_color );
 }
 
-void FluidSolver2D::AddInflowObject( float d, float u, float v, float r, float g, float b, float x, float y, float rad )
+bool FluidSolver2D::AddInflowObject( float d, float u, float v, float r, float g, float b, float x, float y, float rad )
 {
 	if (d_->inflowObjects_.size() < MAX_NUM_INFLOWS)
 	{
 		InFlowData new_inflow( u, v, d, r, g, b, x, y, rad );
 		d_->inflowObjects_.push_back( new_inflow );
+		cudaMemcpy( d_->inflowObjectsGpu, d_->inflowObjects_.data(), d_->inflowObjects_.size() * sizeof( InFlowData ), cudaMemcpyHostToDevice );
+		return true;
 	}
-	cudaMemcpy( d_->inflowObjectsGpu_, d_->inflowObjects_.data(), d_->inflowObjects_.size() * sizeof( InFlowData ), cudaMemcpyHostToDevice );
+	return false;
+}
+
+bool FluidSolver2D::removeInflowObject( unsigned index )
+{
+	if (!d_->inflowObjects_.empty() && (d_->inflowObjects_.size()) > index)
+	{
+		d_->inflowObjects_.erase( d_->inflowObjects_.begin() + index );
+		cudaMemcpy( d_->inflowObjectsGpu, d_->inflowObjects_.data(), d_->inflowObjects_.size() * sizeof( InFlowData ), cudaMemcpyHostToDevice );
+		return true;
+	}
+	return false;
+}
+
+bool FluidSolver2D::AddSolidBody( const SolidBody & solidBody )
+{
+	if (d_->solidBodies_.size() < MAX_NUM_SOLID_BODIES)
+	{
+		d_->solidBodies_.push_back( solidBody );
+		cudaMemcpy( d_->solidBodyObjectsGpu, d_->solidBodies_.data(), d_->solidBodies_.size() * sizeof( SolidBody ), cudaMemcpyHostToDevice );
+		return true;
+	}
+	return false;
+}
+
+bool FluidSolver2D::RemoveSolidBody( unsigned index )
+{
+	if (!d_->solidBodies_.empty() && ( d_->solidBodies_.size() ) > index)
+	{
+		d_->solidBodies_.erase( d_->solidBodies_.begin() + index );
+		cudaMemcpy( d_->solidBodyObjectsGpu, d_->solidBodies_.data(), d_->solidBodies_.size() * sizeof( SolidBody ), cudaMemcpyHostToDevice );
+		return true;
+	}
+	return false;
 }
 
 const double* FluidSolver2D::ToImage() const
@@ -585,9 +653,19 @@ std::vector<InFlowData>& FluidSolver2D::GetInFlows()
 	return d_->inflowObjects_;
 }
 
+std::vector<SolidBody>& FluidSolver2D::GetSolidBodies()
+{
+	return d_->solidBodies_;
+}
+
 void FluidSolver2D::ReUploadInFlows()
 {
-	cudaMemcpy( d_->inflowObjectsGpu_, d_->inflowObjects_.data(), d_->inflowObjects_.size() * sizeof( InFlowData ), cudaMemcpyHostToDevice );
+	cudaMemcpy( d_->inflowObjectsGpu, d_->inflowObjects_.data(), d_->inflowObjects_.size() * sizeof( InFlowData ), cudaMemcpyHostToDevice );
+}
+
+void FluidSolver2D::ReUploadSolidBodies()
+{
+	cudaMemcpy( d_->solidBodyObjectsGpu, d_->solidBodies_.data(), d_->solidBodies_.size() * sizeof( SolidBody ), cudaMemcpyHostToDevice );
 }
 
 void FluidSolver2D::ResetSimulation()
@@ -599,7 +677,7 @@ void FluidSolver2D::ResetSimulation()
 	cudaMemset( d_->dev_dens, 0, sizeof( float ) * d_->gridSize.x * d_->gridSize.y );
 	cudaMemset( d_->dev_pressure, 0, sizeof( float ) * d_->gridSize.x * d_->gridSize.y );
 	cudaMemset( d_->dev_obstacles, 0, sizeof( float4 ) * d_->gridSize.x * d_->gridSize.y );
-	d_->texture_writer_->WriteToFluidTexture(d_->gridSize, d_->dev_dens, d_->dev_color);
+	d_->texture_writer_->WriteToFluidTexture( d_->gridSize, d_->dev_dens, d_->dev_color );
 
 }
 
@@ -609,12 +687,12 @@ void FluidSolver2D::BindTextures_()
 	cudaChannelFormatDesc descFloat2 = cudaCreateChannelDesc<float2>();
 	cudaChannelFormatDesc descFloat4 = cudaCreateChannelDesc<float4>();
 
-	cudaBindTextureToArray( CudaTextureResources::velocityTexture,   d_->velArray,      descFloat2 );
-	cudaBindTextureToArray( CudaTextureResources::densityTexture,    d_->densArray,     descFloat );
-	cudaBindTextureToArray( CudaTextureResources::pressureTexture,   d_->pressureArray, descFloat );
-	cudaBindTextureToArray( CudaTextureResources::divergenceTexture, d_->divArray,      descFloat );
-	cudaBindTextureToArray( CudaTextureResources::colorTexture,		 d_->colorArray,    descFloat4 );
-	cudaBindTextureToArray( CudaTextureResources::obstacleTexture,   d_->obstArray,     descFloat4 );
+	cudaBindTextureToArray( CudaTextureResources::velocityTexture, d_->velArray, descFloat2 );
+	cudaBindTextureToArray( CudaTextureResources::densityTexture, d_->densArray, descFloat );
+	cudaBindTextureToArray( CudaTextureResources::pressureTexture, d_->pressureArray, descFloat );
+	cudaBindTextureToArray( CudaTextureResources::divergenceTexture, d_->divArray, descFloat );
+	cudaBindTextureToArray( CudaTextureResources::colorTexture, d_->colorArray, descFloat4 );
+	cudaBindTextureToArray( CudaTextureResources::obstacleTexture, d_->obstArray, descFloat4 );
 }
 
 void FluidSolver2D::UnBindTextures_()
@@ -627,10 +705,13 @@ void FluidSolver2D::UnBindTextures_()
 	cudaUnbindTexture( CudaTextureResources::obstacleTexture );
 }
 
-void FluidSolver2D::CreateObstacleBorder_()
+void FluidSolver2D::FillObstacleTexture_()
 {
+	cudaMemset( d_->dev_obstacles, 0.0, sizeof( float4 ) * d_->gridSize.x * d_->gridSize.y );
 	auto thread_dims = cuda_math::GetKernelDimensions( d_->gridSize.x, d_->gridSize.y, TX, TY );
-	createObstacleBorder << <thread_dims.first, thread_dims.second >> >( d_->dev_obstacles, d_->gridSize );
+	createObstacleBorder << <thread_dims.first, thread_dims.second >> > (d_->dev_obstacles, d_->gridSize);
+	cudaDeviceSynchronize();
+	addSolidBodyObstacles << <thread_dims.first, thread_dims.second >> >( d_->dev_obstacles, d_->gridSize, d_->solidBodyObjectsGpu, d_->solidBodies_.size() );
 	cudaDeviceSynchronize();
 }
 
@@ -638,21 +719,21 @@ void FluidSolver2D::AddInFlows_()
 {
 	auto thread_dims = cuda_math::GetKernelDimensions( d_->gridSize.x, d_->gridSize.y, TX, TY );
 
-	AddInFlow1DQuantity << <thread_dims.first, thread_dims.second >> > (d_->dev_dens, d_->gridSize, d_->cell_size_, d_->inflowObjectsGpu_, d_->inflowObjects_.size() );
-	cudaDeviceSynchronize();
-	
-	AddInFlowVelocityCUDA << <thread_dims.first, thread_dims.second >> > ( d_->dev_vel, d_->gridSize, d_->cell_size_, d_->inflowObjectsGpu_, d_->inflowObjects_.size() );
+	AddInFlow1DQuantity << <thread_dims.first, thread_dims.second >> > (d_->dev_dens, d_->gridSize, d_->cell_size_, d_->inflowObjectsGpu, d_->inflowObjects_.size());
 	cudaDeviceSynchronize();
 
-	AddInFlowColor << <thread_dims.first, thread_dims.second >> > (d_->dev_color, d_->gridSize, d_->cell_size_, d_->inflowObjectsGpu_, d_->inflowObjects_.size());
+	AddInFlowVelocityCUDA << <thread_dims.first, thread_dims.second >> > (d_->dev_vel, d_->gridSize, d_->cell_size_, d_->inflowObjectsGpu, d_->inflowObjects_.size());
+	cudaDeviceSynchronize();
+
+	AddInFlowColor << <thread_dims.first, thread_dims.second >> > (d_->dev_color, d_->gridSize, d_->cell_size_, d_->inflowObjectsGpu, d_->inflowObjects_.size());
 	cudaDeviceSynchronize();
 }
 
 void FluidSolver2D::AdvectCuda_( float timestep )
 {
 	auto thread_dims = cuda_math::GetKernelDimensions( d_->gridSize.x, d_->gridSize.y, TX, TY );
-	
-	AdvectVel << <thread_dims.first, thread_dims.second >> > ( d_->dev_vel, timestep, 0, d_->invGridSize, d_->gridSize );
+
+	AdvectVel << <thread_dims.first, thread_dims.second >> > (d_->dev_vel, timestep, 0, d_->invGridSize, d_->gridSize);
 	cudaDeviceSynchronize();
 
 	Advect1DQuantity << <thread_dims.first, thread_dims.second >> > (d_->dev_dens, timestep, 0, d_->invGridSize, d_->gridSize);
@@ -665,7 +746,7 @@ void FluidSolver2D::AdvectCuda_( float timestep )
 void FluidSolver2D::DivergenceCuda_()
 {
 	auto thread_dims = cuda_math::GetKernelDimensions( d_->gridSize.x, d_->gridSize.y, TX, TY );
-	Divergence<< <thread_dims.first, thread_dims.second >> > (d_->dev_div, d_->gridSize, d_->invCellSize );
+	Divergence << <thread_dims.first, thread_dims.second >> > (d_->dev_div, d_->gridSize, d_->invCellSize);
 	cudaDeviceSynchronize();
 }
 
@@ -674,77 +755,81 @@ void FluidSolver2D::JacobiStepCuda_()
 	float alpha = -(1.0f / d_->invCellSize.x * 1.0f / d_->invCellSize.y);
 	float rBeta = 0.25;
 	auto thread_dims = cuda_math::GetKernelDimensions( d_->gridSize.x, d_->gridSize.y, TX, TY );
-	JacobiStep<< <thread_dims.first, thread_dims.second >> > ( d_->dev_pressure, alpha, rBeta, d_->gridSize );
+	JacobiStep << <thread_dims.first, thread_dims.second >> > (d_->dev_pressure, alpha, rBeta, d_->gridSize);
 	cudaDeviceSynchronize();
 }
 
 void FluidSolver2D::ProjectionCuda_()
 {
 	auto thread_dims = cuda_math::GetKernelDimensions( d_->gridSize.x, d_->gridSize.y, TX, TY );
-	Projection<< < thread_dims.first, thread_dims.second >> > ( d_->dev_vel, d_->gridSize, d_->invCellSize );
+	Projection << < thread_dims.first, thread_dims.second >> > (d_->dev_vel, d_->gridSize, d_->invCellSize);
 	cudaDeviceSynchronize();
 }
 
 void FluidSolver2D::Setup2DTexturesCuda_()
 {
-	CudaTextureResources::colorTexture.filterMode      = cudaFilterModeLinear;
-	CudaTextureResources::densityTexture.filterMode    = cudaFilterModeLinear;
-	CudaTextureResources::velocityTexture.filterMode   = cudaFilterModeLinear;
-	CudaTextureResources::pressureTexture.filterMode   = cudaFilterModeLinear;
+	CudaTextureResources::colorTexture.filterMode = cudaFilterModeLinear;
+	CudaTextureResources::densityTexture.filterMode = cudaFilterModeLinear;
+	CudaTextureResources::velocityTexture.filterMode = cudaFilterModeLinear;
+	CudaTextureResources::pressureTexture.filterMode = cudaFilterModeLinear;
 	CudaTextureResources::divergenceTexture.filterMode = cudaFilterModeLinear;
-	CudaTextureResources::obstacleTexture.filterMode   = cudaFilterModeLinear;
+	CudaTextureResources::obstacleTexture.filterMode = cudaFilterModeLinear;
 }
 
-FluidSolver2DPrivate::FluidSolver2DPrivate( unsigned int w, unsigned int h, double density ):
-	fluid_density_(density)
+FluidSolver2DPrivate::FluidSolver2DPrivate( unsigned int w, unsigned int h, double density ) :
+	fluid_density_( density )
 {
 	gridSize = make_uint2( w, h );
-	invGridSize = make_float2( 1.0f / float(w), 1.0f / float(h) );
+	invGridSize = make_float2( 1.0f / float( w ), 1.0f / float( h ) );
 	invCellSize = make_float2( 1.0f, 1.0f );
 	cell_size_ = 1.0 / std::min( w, h );
 
-	cudaChannelFormatDesc descFloat  = cudaCreateChannelDesc<float>();
+	cudaChannelFormatDesc descFloat = cudaCreateChannelDesc<float>();
 	cudaChannelFormatDesc descFloat2 = cudaCreateChannelDesc<float2>();
 	cudaChannelFormatDesc descFloat4 = cudaCreateChannelDesc<float4>();
 
-	cudaMalloc( (void**)&dev_vel, sizeof( float2 ) * w * h  );
-	cudaMallocArray( &velArray, &descFloat2, w , h, cudaArraySurfaceLoadStore );
+	cudaMalloc( (void**)&dev_vel, sizeof( float2 ) * w * h );
+	cudaMallocArray( &velArray, &descFloat2, w, h, cudaArraySurfaceLoadStore );
 
 	cudaMalloc( (void**)&dev_dens, sizeof( float ) * w * h );
-	cudaMallocArray( &densArray, &descFloat, w , h, cudaArraySurfaceLoadStore );
+	cudaMallocArray( &densArray, &descFloat, w, h, cudaArraySurfaceLoadStore );
 
-	cudaMalloc( (void**)&dev_pressure, sizeof( float ) * w * h  );
-	cudaMallocArray( &pressureArray, &descFloat, w , h, cudaArraySurfaceLoadStore );
+	cudaMalloc( (void**)&dev_pressure, sizeof( float ) * w * h );
+	cudaMallocArray( &pressureArray, &descFloat, w, h, cudaArraySurfaceLoadStore );
 
-	cudaMalloc( (void**)&dev_div, sizeof( float ) * w * h  );
-	cudaMallocArray( &divArray, &descFloat, w , h , cudaArraySurfaceLoadStore );
+	cudaMalloc( (void**)&dev_div, sizeof( float ) * w * h );
+	cudaMallocArray( &divArray, &descFloat, w, h, cudaArraySurfaceLoadStore );
 
-	cudaMalloc( (void**)&dev_obstacles, sizeof( float4 ) * w * h  );
-	cudaMallocArray( &obstArray, &descFloat4, w , h, cudaArraySurfaceLoadStore );
+	cudaMalloc( (void**)&dev_obstacles, sizeof( float4 ) * w * h );
+	cudaMallocArray( &obstArray, &descFloat4, w, h, cudaArraySurfaceLoadStore );
 
 	cudaMalloc( (void**)&dev_color, sizeof( float4 ) * w * h );
 	cudaMallocArray( &colorArray, &descFloat4, w, h, cudaArraySurfaceLoadStore );
 
-	cudaMalloc( (void**)&inflowObjectsGpu_, sizeof( InFlowData ) * MAX_NUM_INFLOWS );
+	cudaMalloc( (void**)&inflowObjectsGpu, sizeof( InFlowData ) * MAX_NUM_INFLOWS );
+	cudaMalloc( (void**)&solidBodyObjectsGpu, sizeof( SolidBody )  * MAX_NUM_SOLID_BODIES );
 }
 
 FluidSolver2DPrivate::~FluidSolver2DPrivate()
 {
 	cudaFree( dev_vel );
 	cudaFreeArray( velArray );
-	
+
 	cudaFree( dev_dens );
 	cudaFreeArray( densArray );
-	
+
 	cudaFree( dev_pressure );
 	cudaFreeArray( pressureArray );
-	
+
 	cudaFree( dev_div );
 	cudaFreeArray( divArray );
-	
+
 	cudaFree( dev_obstacles );
 	cudaFreeArray( obstArray );
 
 	cudaFree( dev_color );
 	cudaFreeArray( colorArray );
+
+	cudaFree( inflowObjectsGpu );
+	cudaFree( solidBodyObjectsGpu );
 }

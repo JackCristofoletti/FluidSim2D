@@ -19,12 +19,13 @@ public:
     FluidGLWidget(QWidget *parent = 0);
     ~FluidGLWidget() = default;
 
-	void SetInflowCallback(std::function< void(InFlowData*) > callback) { inflow_data_callback_ = callback; }
-	void SetNumInFlowsCallback(std::function< void(unsigned) > callback) { num_inflows_callback_ = callback; }
+	void SetInflowFluidSolverCallback( std::function< void( FluidSolver2D* ) > callback ) { inflowFluidSolverCallback_ = callback; }
+	void SetSolidBodyFluidSolverCallback( std::function< void( FluidSolver2D* ) > callback ) { solidBodyFluidSolverCallback_ = callback; }
 
 public slots:
     void cleanup() {}
 	void ReUploadInFlows();
+	void ReUploadSolidBodies();
 	void Start();
 	void Pause();
 	void Stop();
@@ -44,8 +45,8 @@ private:
     unsigned int fluid_texture_; //fluid color 
 
 	//callback functions for widget, sim comunication
-	std::function< void(InFlowData*) > inflow_data_callback_;
-	std::function< void(unsigned) > num_inflows_callback_;
+	std::function< void( FluidSolver2D* ) > inflowFluidSolverCallback_;
+	std::function< void( FluidSolver2D* ) > solidBodyFluidSolverCallback_;;
 	bool running_ = false;
 	
 };

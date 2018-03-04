@@ -2,6 +2,7 @@
 #define FLUID_SOLVER_2D_H
 
 #include "InFlowData.h"
+#include "SolidBody.h"
 #include <memory>
 #include <vector>
 
@@ -11,6 +12,8 @@ class FluidSolver2DPrivate;
 
 #define TX 16 // number of threads per block along x-axis
 #define TY 16 // number of threads per block along y-axis
+#define MAX_NUM_INFLOWS 10 //max number of flowers in simulation
+#define MAX_NUM_SOLID_BODIES 100
 
 /* Fluid solver class. Sets up the fluid quantities, forces incompressibility
 * performs advection and adds inflows.
@@ -25,7 +28,10 @@ public:
 	void Update(double timestep);
 
 	//add a fluid emmsion object to the scene
-	void AddInflowObject(float d, float u, float v, float r, float g, float b, float x, float y, float rad );
+	bool AddInflowObject(float d, float u, float v, float r, float g, float b, float x, float y, float rad );
+	bool removeInflowObject( unsigned index );
+	bool AddSolidBody( const SolidBody& solidBody );
+	bool RemoveSolidBody( unsigned index );
 
 	//returns density data
 	const double* ToImage() const;
@@ -40,9 +46,11 @@ public:
 	void RegisterGLTexture(unsigned tex_id);
 
 	std::vector<InFlowData>& GetInFlows();
+	std::vector<SolidBody>&  GetSolidBodies();
 
-	//call this function when fluid flow params have changed and we need to trigger a reupload
+	//call this function when fluid flow param // solid bodiess have changed and we need to trigger a reupload
 	void ReUploadInFlows();
+	void ReUploadSolidBodies();
 
 	//zeros out simulation
 	void ResetSimulation();
@@ -52,7 +60,7 @@ private:
 	void BindTextures_();
 	void UnBindTextures_();
 
-	void CreateObstacleBorder_(); //fills the obstacle texture along the grid border
+	void FillObstacleTexture_(); //fills the obstacle texture along the grid border
 	void AddInFlows_();           //Adds speed, color and density to simulation
 	void AdvectCuda_( float timestep); //advect whatever you want
 	void DivergenceCuda_();

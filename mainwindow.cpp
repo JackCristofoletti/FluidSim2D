@@ -10,14 +10,28 @@ MainWindow::MainWindow(QWidget *parent) :
 {
 	ui->setupUi(this);
 	// Inflow Widget will finish it's setup once InitGL is called on the fluid widget
-	ui->widget->SetInflowCallback( ( std::bind( &InFlowWidget::SetInFlows, ui->inflows_tab, std::placeholders::_1 ) ) );
-	ui->widget->SetNumInFlowsCallback( ( std::bind( &InFlowWidget::SetInflowSize, ui->inflows_tab, std::placeholders::_1 ) ) );
+	ui->widget->SetInflowFluidSolverCallback( ( std::bind( &InFlowWidget::SetFluidSolver, ui->inflows_tab, std::placeholders::_1 ) ) );
+	ui->widget->SetSolidBodyFluidSolverCallback( ( std::bind( &SolidBodyTab::SetFluidSolver, ui->solidBodyTab, std::placeholders::_1 )) );
 
 	QObject::connect( ui->inflows_tab, SIGNAL( InflowChanged() ), ui->widget, SLOT( ReUploadInFlows() ) );
+	QObject::connect( ui->solidBodyTab, SIGNAL( SolidBodyChanged() ), ui->widget, SLOT( ReUploadSolidBodies() ) );
+}
 
-	QObject::connect( ui->start_button, SIGNAL( clicked() ), ui->widget, SLOT( Start() ) );
-	QObject::connect( ui->pause_button, SIGNAL( clicked() ), ui->widget, SLOT( Pause() ) );
-	QObject::connect( ui->stop_button, SIGNAL( clicked() ), ui->widget, SLOT( Stop() ) );
+void MainWindow::on_start_button_clicked()
+{
+	ui->widget->Start();
+	ui->solidBodyTab->setDisabled( true );
+}
+
+void MainWindow::on_pause_button_clicked()
+{
+	ui->widget->Pause();
+}
+
+void MainWindow::on_stop_button_clicked()
+{
+	ui->widget->Stop();
+	ui->solidBodyTab->setEnabled( true );
 }
 
 MainWindow::~MainWindow()

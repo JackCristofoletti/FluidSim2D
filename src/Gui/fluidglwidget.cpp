@@ -6,6 +6,11 @@ FluidGLWidget::FluidGLWidget(QWidget *parent )
     : QOpenGLWidget(parent)
 {}
 
+void FluidGLWidget::ReUploadSolidBodies()
+{
+	fluid_simulation_->ReUploadSolidBodies();
+}
+
 void FluidGLWidget::Start()
 {
 	running_ = true;
@@ -40,17 +45,22 @@ void FluidGLWidget::initializeGL()
    InitFluidTexture_( sizeX, sizeY );
 
    //two example emitters
-   fluid_simulation_->AddInflowObject(1.0, 0.0, 300.0, 0.0, 0.0, 255.0, 0.5, 0.5, 0.01);
+   fluid_simulation_->AddInflowObject(1.0, 0.0, 300.0, 0.0, 0.0, 255.0, 0.5, 0.1, 0.01);
    fluid_simulation_->AddInflowObject(1.0, 0.0, -600.0, 255.0, 0.0, 0.0, 0.5, 0.8, 0.01);
 
-   //call this first so we can display the pointer data in the widget
-   if (num_inflows_callback_)
-	   num_inflows_callback_(fluid_simulation_->GetInFlows().size());
+   //example solidBody
+   SolidBody body( 0.5f, 0.3f, 0.1f, 0.1f );
+   SolidBody circle( 0.5f, 0.6f, 0.05f );
+   fluid_simulation_->AddSolidBody( body );
+   fluid_simulation_->AddSolidBody( circle );
 
-   if (inflow_data_callback_)
-	   inflow_data_callback_(fluid_simulation_->GetInFlows().data());
- 
- 
+   //call this first so we can display the pointer data in the widget
+   if (inflowFluidSolverCallback_)
+	   inflowFluidSolverCallback_(fluid_simulation_.get());
+
+   if (solidBodyFluidSolverCallback_)
+	   solidBodyFluidSolverCallback_( fluid_simulation_.get() );
+
    graphics_renderer_->InitGL();
 }
 
@@ -61,6 +71,7 @@ void FluidGLWidget::paintGL()
     UpdateSimulation_();
     glClear(GL_COLOR_BUFFER_BIT);
     graphics_renderer_->RenderTexture( fluid_texture_ );
+	graphics_renderer_->RenderSolidBodies( fluid_simulation_->GetSolidBodies() );
 	std::cout << "Frames Per Second: " << 1.0f / float( timer.elapsed() / 1000.0f ) << '\r';
 	update();
 }

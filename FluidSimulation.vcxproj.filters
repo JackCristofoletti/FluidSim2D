@@ -6,11 +6,6 @@
       <Extensions>ui</Extensions>
       <ParseFiles>false</ParseFiles>
     </Filter>
-    <Filter Include="Form Files">
-      <UniqueIdentifier>{99349809-55BA-4b9d-BF79-8FDBB0286EB3}</UniqueIdentifier>
-      <Extensions>ui</Extensions>
-      <ParseFiles>false</ParseFiles>
-    </Filter>
     <Filter Include="Generated Files">
       <UniqueIdentifier>{71ED8ED8-ACB9-4CE9-BBE1-E00B30144E11}</UniqueIdentifier>
       <Extensions>cpp;c;cxx;moc;h;def;odl;idl;res;</Extensions>
@@ -72,6 +67,16 @@
       <Extensions>qrc;*</Extensions>
       <ParseFiles>false</ParseFiles>
     </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h</Extensions>
+      <ParseFiles>true</ParseFiles>
+    </Filter>
+    <Filter Include="Source Files\Gui\Form Files">
+      <UniqueIdentifier>{99349809-55BA-4b9d-BF79-8FDBB0286EB3}</UniqueIdentifier>
+      <Extensions>ui</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -113,6 +118,18 @@
     <ClCompile Include="GeneratedFiles\qrc_darkstyle.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Fluid\SolidBody.cpp">
+      <Filter>Source Files\Fluid</Filter>
+    </ClCompile>
+    <ClCompile Include="Debug\moc_solidbodytab.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="Release\moc_solidbodytab.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Gui\solidbodytab.cpp">
+      <Filter>Source Files\Gui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="mainwindow.h">
@@ -122,7 +139,7 @@
       <Filter>Source Files\Graphics</Filter>
     </ClInclude>
     <CustomBuild Include="src\Gui\InFlowWidget.ui">
-      <Filter>Form Files</Filter>
+      <Filter>Source Files\Gui\Form Files</Filter>
     </CustomBuild>
     <CustomBuild Include="src\Gui\InFlowWidget.hpp">
       <Filter>Source Files\Gui</Filter>
@@ -130,10 +147,16 @@
     <CustomBuild Include="darkstyle.qrc">
       <Filter>Resource Files</Filter>
     </CustomBuild>
+    <CustomBuild Include="src\Gui\solidbodytab.ui">
+      <Filter>Source Files\Gui\Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="src\Gui\solidbodytab.hpp">
+      <Filter>Source Files\Gui</Filter>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="mainwindow.ui">
-      <Filter>Form Files</Filter>
+      <Filter>Source Files\Gui\Form Files</Filter>
     </CustomBuild>
     <CustomBuild Include="src\Gui\fluidglwidget.h">
       <Filter>Source Files\Gui</Filter>
@@ -147,6 +170,12 @@
       <Filter>Distribution Files</Filter>
     </None>
     <None Include="darkstyle\darkstyle.qss" />
+    <None Include="shaders\solidBodyQuad.vert">
+      <Filter>Distribution Files</Filter>
+    </None>
+    <None Include="shaders\solidBodyQuad.frag">
+      <Filter>Distribution Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GeneratedFiles\ui_mainwindow.h">
@@ -162,6 +191,12 @@
       <Filter>Source Files\Fluid</Filter>
     </ClInclude>
     <ClInclude Include="GeneratedFiles\ui_InFlowWidget.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Fluid\SolidBody.h">
+      <Filter>Source Files\Fluid</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_solidbodytab.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
   </ItemGroup>
